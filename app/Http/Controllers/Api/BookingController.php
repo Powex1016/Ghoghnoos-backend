@@ -177,4 +177,47 @@ class BookingController extends Controller
 
         return response()->json(['message' => 'رزرو با موفقیت حذف شد.']); // می‌توان از noContent() هم استفاده کرد (204)
     }
+     public function getPublicBookingStatus(Request $request): JsonResponse
+    {
+        $query = \App\Models\Booking::query();
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('booking_date', [$request->start_date, $request->end_date]);
+        }
+
+        $bookingsByDate = $query
+            ->selectRaw('booking_date, COUNT(*) as count')
+            ->groupBy('booking_date')
+            ->get()
+            ->pluck('count', 'booking_date');
+
+        return response()->json($bookingsByDate);
+    }
+
+    /**
+     * دریافت ساعات رزرو شده در یک تاریخ مشخص برای تمام کاربران.
+     */
+    public function getPublicBookingTimesForDate(string $date): JsonResponse
+    {
+        try {
+            $validatedDate = \Illuminate\Support\Facades\Validator::make(['date' => $date], [
+                'date' => 'required|date_format:Y-m-d',
+            ])->validate();
+
+            $bookedTimes = \App\Models\Booking::where('booking_date', $validatedDate['date'])
+                ->pluck('booking_time')
+                ->map(function ($time) {
+                    return substr($time, 0, 5); // فقط فرمت HH:MM برگردانده می‌شود
+                });
+
+            return response()->json($bookedTimes);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'فرمت تاریخ نامعتبر است. لطفاً از فرمت YYYY-MM-DD استفاده کنید.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    }
 }
+

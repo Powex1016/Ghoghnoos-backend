@@ -4,6 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BookingController; // اضافه شده: کنترلر رزروها
 
+Route::get('/bookings/status', [BookingController::class, 'getPublicBookingStatus']);
+Route::get('/bookings/times/{date}', [BookingController::class, 'getPublicBookingTimesForDate']);
+
 // روت‌های احراز هویت از Laravel Breeze (شامل login, register, logout)
 require __DIR__.'/auth.php';
 
