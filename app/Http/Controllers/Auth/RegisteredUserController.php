@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse; // مهم: این خط باید باشد
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException; // اضافه شده: برای خطای ولیدیشن دستی
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules;
 
 class RegisteredUserController extends Controller
@@ -21,40 +21,39 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // ولیدیشن
         try {
             $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+                // *** ولیدیشن برای شماره تلفن اضافه شد ***
+                'phone' => ['required', 'string', 'unique:users,phone', 'size:11'],
                 'password' => ['required', 'confirmed', Rules\Password::defaults()],
             ]);
         } catch (ValidationException $e) {
-            // اگر ولیدیشن ناموفق بود، خطاهای JSON را برگردانید
             return response()->json([
                 'message' => 'اطلاعات ارسالی نامعتبر است.',
                 'errors' => $e->errors()
             ], 422);
         }
 
-        // ایجاد کاربر
+        // *** شماره تلفن به ایجاد کاربر اضافه شد ***
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone, // ذخیره شماره تلفن
             'password' => Hash::make($request->string('password')),
         ]);
 
         event(new Registered($user));
 
-        Auth::login($user); // این خط اختیاری است، اما برای Sanctum نیاز به یک توکن اولیه دارید
+        Auth::login($user);
 
-        // ساخت توکن Sanctum برای کاربر
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // بازگرداندن پاسخ JSON موفقیت
         return response()->json([
             'user' => $user,
             'token' => $token,
             'message' => 'ثبت نام با موفقیت انجام شد و شما وارد شدید.'
-        ], 201); // 201 Created
+        ], 201);
     }
 }

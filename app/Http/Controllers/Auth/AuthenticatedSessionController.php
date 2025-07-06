@@ -7,22 +7,34 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\JsonResponse; // مهم: این خط باید باشد
+use Illuminate\Http\JsonResponse;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
+/**
      * Handle an incoming authentication request.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(LoginRequest $request): JsonResponse // نوع بازگشتی JsonResponse
+    public function store(LoginRequest $request): JsonResponse
     {
-        // تلاش برای احراز هویت کاربر
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // ۱. ورودی را از ریکوست دریافت می‌کنیم (فرانت‌اند آن را با کلید 'email' ارسال می‌کند)
+        $identifier = $request->input('email');
+
+        // ۲. تشخیص می‌دهیم که ورودی ایمیل است یا شماره تلفن
+        $fieldType = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        // ۳. اطلاعات کاربری را برای تلاش ورود آماده می‌کنیم
+        $credentials = [
+            $fieldType => $identifier,
+            'password' => $request->password
+        ];
+
+        // ۴. تلاش برای احراز هویت
+        if (!Auth::attempt($credentials)) {
             // اگر احراز هویت ناموفق بود
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'email' => __('auth.failed'), // پیام خطای پیش فرض لاراول برای ورود ناموفق
+                'email' => __('auth.failed'), // پیام خطا برای فرانت‌اند همچنان روی فیلد email ارسال می‌شود
             ]);
         }
 

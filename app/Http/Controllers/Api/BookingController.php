@@ -13,12 +13,11 @@ class BookingController extends Controller
     /**
      * Display a listing of the resource for the authenticated user.
      */
-    // 🟢 بعد از تغییر
-public function index(Request $request): JsonResponse
-{
-    $bookings = Auth::user()->bookings()->latest()->get();
-    return response()->json($bookings);
-}
+    public function index(Request $request): JsonResponse
+    {
+        $bookings = Auth::user()->bookings()->latest()->get();
+        return response()->json($bookings);
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -44,12 +43,8 @@ public function index(Request $request): JsonResponse
      */
     public function adminIndex(): JsonResponse
     {
-        // نکته: در یک پروژه واقعی، اینجا باید بررسی شود که کاربر لاگین کرده ادمین است یا خیر
-        // if (!Auth::user()->isAdmin()) {
-        //     return response()->json(['message' => 'Unauthorized'], 403);
-        // }
-
-        $bookings = Booking::with('user:id,name,email')->latest()->get();
+        // 'phone' به لیست ستون‌های درخواستی از مدل User اضافه شد
+        $bookings = Booking::with('user:id,name,email,phone')->latest()->get();
 
         return response()->json($bookings);
     }
@@ -59,8 +54,6 @@ public function index(Request $request): JsonResponse
      */
     public function adminUpdateStatus(Request $request, Booking $booking): JsonResponse
     {
-        // اینجا هم باید دسترسی ادمین چک شود
-
         $request->validate([
             'status' => 'required|string|in:pending,confirmed,completed,cancelled',
         ]);
