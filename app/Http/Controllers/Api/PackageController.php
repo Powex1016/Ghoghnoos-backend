@@ -30,12 +30,12 @@ class PackageController extends Controller
             'booking_time' => Carbon::now()->toTimeString(),
             'service_type' => $validated['package_name'], // نام پکیج به عنوان نوع سرویس
             'notes' => 'خرید پکیج با مبلغ ' . $validated['package_price'], // یادداشت برای مشخص شدن خرید
-            'status' => 'completed', // وضعیت روی 'تکمیل شده' تنظیم می‌شود
+            'status' => 'pending', // <<< تغییر کلیدی: وضعیت به 'pending' (در انتظار تایید) تغییر یافت
         ]);
 
         // برگرداندن پیام موفقیت‌آمیز
         return response()->json([
-            'message' => 'خرید پکیج شما با موفقیت ثبت و نهایی شد.'
+            'message' => 'خرید پکیج شما با موفقیت ثبت شد و در انتظار تایید مدیریت است.'
         ], 200); // 200 OK
     }
 }

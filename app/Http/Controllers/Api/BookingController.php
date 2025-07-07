@@ -7,8 +7,8 @@ use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB; // <-- این خط اضافه شده
-use Carbon\Carbon;                 // <-- این خط اضافه شده
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
@@ -64,25 +64,38 @@ class BookingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // ۱. دریافت تمام رزروهای کاربر، از جدیدترین به قدیمی‌ترین
         $bookings = Auth::user()->bookings()->latest()->get();
-        return response()->json($bookings);
+
+        // ۲. فیلتر کردن رزروها برای حذف موارد تکراری بر اساس نوع سرویس، تاریخ و ساعت
+        $uniqueBookings = $bookings->unique(function ($item) {
+            return $item['service_type'] . $item['booking_date'] . $item['booking_time'];
+        });
+
+        // ۳. بازگرداندن لیست منحصر به فرد به فرانت‌اند
+        // متد values()->all() کلیدهای آرایه را بازنشانی می‌کند تا ساختار JSON صحیح باشد
+        return response()->json($uniqueBookings->values()->all());
     }
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'booking_date' => 'required|date|after_or_equal:today',
             'booking_time' => 'required|date_format:H:i',
             'service_type' => 'required|string|max:255',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $booking = Auth::user()->bookings()->create($request->all());
+        // اضافه کردن وضعیت 'pending' به صورت صریح
+        $validatedData['status'] = 'pending';
 
-        return response()->json(['message' => 'نوبت شما با موفقیت رزرو شد.', 'booking' => $booking], 201);
+        $booking = Auth::user()->bookings()->create($validatedData);
+
+        return response()->json(['message' => 'نوبت شما با موفقیت رزرو شد و در انتظار تایید است.', 'booking' => $booking], 201);
     }
 
     /**
