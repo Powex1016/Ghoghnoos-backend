@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Booking; // <-- ایمپورت کردن مدل Booking
+use Carbon\Carbon;     // <-- ایمپورت کردن Carbon برای کار با تاریخ و زمان
 
 class PackageController extends Controller
 {
@@ -21,14 +23,19 @@ class PackageController extends Controller
 
         $user = Auth::user();
 
-        //
-        // در یک پروژه واقعی، اینجا می‌توانید اطلاعات خرید را در دیتابیس ذخیره کنید.
-        // Purchase::create([...]);
-        //
+        // ایجاد یک رکورد جدید در جدول bookings برای ثبت خرید پکیج
+        Booking::create([
+            'user_id' => $user->id,
+            'booking_date' => Carbon::now()->toDateString(),
+            'booking_time' => Carbon::now()->toTimeString(),
+            'service_type' => $validated['package_name'], // نام پکیج به عنوان نوع سرویس
+            'notes' => 'خرید پکیج با مبلغ ' . $validated['package_price'], // یادداشت برای مشخص شدن خرید
+            'status' => 'completed', // وضعیت روی 'تکمیل شده' تنظیم می‌شود
+        ]);
 
-        // به جای ارسال لینک پرداخت، یک پیام موفقیت‌آمیز برمی‌گردانیم
+        // برگرداندن پیام موفقیت‌آمیز
         return response()->json([
-            'message' => 'خرید پکیج با موفقیت برای شما ثبت شد.'
+            'message' => 'خرید پکیج شما با موفقیت ثبت و نهایی شد.'
         ], 200); // 200 OK
     }
 }
