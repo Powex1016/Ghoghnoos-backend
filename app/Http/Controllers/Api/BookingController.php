@@ -103,9 +103,23 @@ class BookingController extends Controller
      */
     public function adminIndex(): JsonResponse
     {
-        $bookings = Booking::with('user:id,name,email,phone')->latest()->get();
-        return response()->json($bookings);
+        // ۱. دریافت تمام رزروها به همراه اطلاعات کاربر، مرتب شده بر اساس جدیدترین
+        $allBookings = Booking::with('user:id,name,email,phone')->latest()->get();
+
+        // ۲. *** کد جدید و کلیدی برای حذف موارد تکراری ***
+        // از کلکسیون لاراول برای گروه‌بندی رزروها بر اساس یک شناسه منحصر به فرد استفاده می‌کنیم.
+        // این شناسه از ترکیب شناسه‌ی کاربر، نوع سرویس، تاریخ و ساعت ساخته می‌شود.
+        $uniqueBookings = $allBookings->unique(function ($item) {
+            // اگر کاربر وجود داشته باشد، از ID او استفاده کن، در غیر این صورت یک مقدار خالی قرار بده
+            $userId = $item->user ? $item->user->id : '';
+            return $userId . $item->service_type . $item->booking_date . $item->booking_time;
+        });
+
+        // ۳. بازگرداندن لیست منحصر به فرد به فرانت‌اند
+        // متد values() کلیدهای آرایه را ریست می‌کند تا یک آرایه JSON استاندارد داشته باشیم.
+        return response()->json($uniqueBookings->values());
     }
+
 
     /**
      * [ADMIN] Update the status of a specified booking.
