@@ -4,16 +4,32 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\RatingController;
-use App\Http\Controllers\Api\PackageController; // این خط برای کنترلر جدید اضافه شده
+use App\Http\Controllers\Api\PackageController;
+use App\Http\Controllers\Api\SearchController;
 
-// روت‌های عمومی (بدون نیاز به لاگین)
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
+// =================================================================
+// 1. روت‌های عمومی (بدون نیاز به لاگین)
+// =================================================================
 Route::get('/bookings/status', [BookingController::class, 'getPublicBookingStatus']);
 Route::get('/bookings/times/{date}', [BookingController::class, 'getPublicBookingTimesForDate']);
+Route::get('/search', [SearchController::class, 'search']);
 
-// روت‌های احراز هویت (ورود، ثبت‌نام، خروج)
+
+// =================================================================
+// 2. روت‌های احراز هویت (ورود، ثبت‌نام و ...)
+// =================================================================
 require __DIR__.'/auth.php';
 
-// گروه روت‌هایی که نیاز به لاگین دارند
+
+// =================================================================
+// 3. روت‌های محافظت شده (نیاز به لاگین دارند)
+// =================================================================
 Route::middleware('auth:sanctum')->group(function () {
 
     // روت برای دریافت اطلاعات کاربر لاگین کرده
@@ -25,11 +41,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('bookings', BookingController::class);
     Route::post('/ratings', [RatingController::class, 'store']);
 
-    // مسیر جدید برای شروع فرآیند خرید پکیج
+    // مسیر برای خرید پکیج
     Route::post('/packages/purchase', [PackageController::class, 'purchase']);
 
     // === گروه روت‌های اختصاصی برای ادمین ===
-    Route::prefix('admin')->group(function () {
+    Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
         // آدرس نهایی: /api/admin/bookings
         Route::get('/bookings', [BookingController::class, 'adminIndex']);
 
