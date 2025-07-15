@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\ChatbotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\SearchController;
 Route::get('/bookings/status', [BookingController::class, 'getPublicBookingStatus']);
 Route::get('/bookings/times/{date}', [BookingController::class, 'getPublicBookingTimesForDate']);
 Route::get('/search', [SearchController::class, 'search']);
+Route::post('/chatbot', [ChatbotController::class, 'handle']);
 
 
 // =================================================================
